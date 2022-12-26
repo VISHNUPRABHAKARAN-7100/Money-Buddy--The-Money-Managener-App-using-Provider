@@ -1,7 +1,9 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers, depend_on_referenced_packages
+import 'package:double_back_to_close_app/double_back_to_close_app.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../db/category/category_db.dart';
+import 'package:money_buddy/provider/transaction_provider.dart';
+import 'package:provider/provider.dart';
 import '../../db/transactions/transaction_db.dart';
 import '../../models/category/category_model.dart';
 import '../../models/transactions/transaction_model.dart';
@@ -11,39 +13,35 @@ import '../screen_categories/screen_categories.dart';
 import '../screen_statistics/screen_statistics.dart';
 import 'drawer_widget/drawer_widger.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatelessWidget {
+  HomeScreen({super.key});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
   PageController pageController = PageController();
 
-  int _selectedIndex = 0;
   late String parsedAmount;
-  
-
-  @override
-  void initState() {
-    TransactionDB.instance.refresh();
-    CategoryDB.instance.refreshUI();
-
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () => _onBackButtonPressed(context),
-      child: Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          backgroundColor: const Color.fromARGB(255, 45, 77, 153),
-          title: const Text('Money Buddy'),
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 45, 77, 153),
+        title: const Text('Money Buddy'),
+      ),
+      body: DoubleBackToCloseApp(snackBar: const SnackBar(
+          content: Text(
+            'Press again to exit',
+            textAlign: TextAlign.center,
+          ),
+          shape: StadiumBorder(),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 9),
+          elevation: 0,
+          dismissDirection: DismissDirection.horizontal,
+          duration: Duration(seconds: 2),
         ),
-        body: PageView(
+        child: PageView(
           physics: const NeverScrollableScrollPhysics(),
           controller: pageController,
           children: [
@@ -155,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>  AllTransactions(),
+                          builder: (context) => AllTransactions(),
                         ),
                       );
                     },
@@ -165,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-// Transaction Details
+                // Transaction Details
                 Expanded(
                   child: ValueListenableBuilder(
                     valueListenable:
@@ -178,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   (newList.length >= 5 ? 5 : newList.length),
                               itemBuilder: (context, index) {
                                 final _value = newList[index];
-
+      
                                 return Card(
                                   child: ListTile(
                                     subtitle: Text(
@@ -228,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AddTransactions(),
+                              builder: (context) =>  AddTransactions(),
                             ),
                           );
                         },
@@ -243,17 +241,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const ScreenCategories(),
-             ScreenStatistics(),
+            ScreenStatistics(),
           ],
         ),
-        drawerScrimColor: Colors.grey.shade200,
-        drawer: const DrawerWidget(),
+      ),
+      drawerScrimColor: Colors.grey.shade200,
+      drawer: const DrawerWidget(),
 
 // Bottom Nvigation Bar
-        bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: Consumer<TransactionProvider>(
+        builder: (context, value, child) => BottomNavigationBar(
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.grey,
-          currentIndex: _selectedIndex,
+          currentIndex: value.selectedIndexForBottomNavigationBar,
           items: const [
             BottomNavigationBarItem(
                 icon: Icon(
@@ -276,46 +276,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 tooltip: 'Statistics'),
           ],
           onTap: (value) {
-            setState(() {
-              _selectedIndex = value;
-            });
+            Provider.of<TransactionProvider>(context, listen: false)
+                .bottomNavigationValueController(value);
             pageController.animateToPage(value,
                 duration: const Duration(seconds: 1), curve: Curves.ease);
           },
         ),
       ),
     );
-  }
-
-// Function For Exit Button Pop-up
-  Future<bool> _onBackButtonPressed(BuildContext context) async {
-    bool? exitApp = await showDialog(
-      context: context,
-      builder: (context) {
-        return SimpleDialog(
-          title: const Text('Exit Application?'),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                    },
-                    child: const Text('No')),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(true);
-                  },
-                  child: const Text('Yes'),
-                )
-              ],
-            )
-          ],
-        );
-      },
-    );
-    return exitApp ?? false;
   }
 
   parsedDate(data) {

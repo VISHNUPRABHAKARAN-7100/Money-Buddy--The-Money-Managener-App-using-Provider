@@ -120,7 +120,7 @@ class TransactionDB implements TransactionFunctions {
 // Function For Reset List Of All Transactions
   Future<void> resetTransactions() async {
     final _db = await Hive.openBox<TransactionModel>(transactionDb_Name);
-    _db.clear();
+    await _db.clear();
     refresh();
     CategoryDB.instance.refreshUI();
   }

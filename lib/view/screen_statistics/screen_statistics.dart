@@ -6,19 +6,14 @@ import 'expense_tab/expense_tab.dart';
 import 'income_tab/income_tab.dart';
 
 class ScreenStatistics extends StatelessWidget {
-   ScreenStatistics({super.key});
+  ScreenStatistics({super.key});
 
-//   @override
-//   State<ScreenStatistics> createState() => _ScreenStatisticsState();
-// }
+  ValueNotifier<List<TransactionModel>> newIncomeTransactionNotaifier =
+      ValueNotifier([]);
 
-ValueNotifier<List<TransactionModel>> newIncomeTransactionNotaifier =
-    ValueNotifier([]);
+  List<TransactionModel> newTransactionList =
+      TransactionDB.instance.transactionListNotifier.value;
 
-List<TransactionModel> newTransactionList =
-    TransactionDB.instance.transactionListNotifier.value;
-
-// class _ScreenStatisticsState extends State<ScreenStatistics> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -45,16 +40,18 @@ List<TransactionModel> newTransactionList =
                 ),
               ),
               Tab(
-                child: Column(children: const [
-                  Icon(
-                    FontAwesomeIcons.arrowUpLong,
-                    color: Colors.purple,
-                  ),
-                  Text(
-                    'Expense',
-                    style: TextStyle(color: Colors.purple),
-                  )
-                ]),
+                child: Column(
+                  children: const [
+                    Icon(
+                      FontAwesomeIcons.arrowUpLong,
+                      color: Colors.purple,
+                    ),
+                    Text(
+                      'Expense',
+                      style: TextStyle(color: Colors.purple),
+                    )
+                  ],
+                ),
               ),
             ],
           ),

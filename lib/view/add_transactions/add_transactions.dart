@@ -1,41 +1,32 @@
-// ignore_for_file: prefer_final_fields, non_constant_identifier_names, sort_child_properties_last, no_leading_underscores_for_local_identifiers, unused_field, empty_statements, invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member, must_be_immutable, depend_on_referenced_packages
-
+// ignore_for_file: prefer_final_fields, no_leading_underscores_for_local_identifiers
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:money_buddy/view/add_transactions/widgets/radio_button_widget.dart';
+import 'package:provider/provider.dart';
 import '../../db/category/category_db.dart';
 import '../../db/transactions/transaction_db.dart';
 import '../../models/category/category_model.dart';
 import '../../models/transactions/transaction_model.dart';
+import '../../provider/transaction_provider.dart';
 
 ValueNotifier<CategoryType> selectedCategoryNotifier =
     ValueNotifier(CategoryType.Income);
 
-class AddTransactions extends StatefulWidget {
-  const AddTransactions({super.key});
+class AddTransactions extends StatelessWidget {
+   AddTransactions({super.key});
 
-  @override
-  State<AddTransactions> createState() => _AddTransactionsState();
-}
 
-class _AddTransactionsState extends State<AddTransactions> {
-  
+
   TextEditingController _amountTextConteoller = TextEditingController();
   TextEditingController _noteTextConteoller = TextEditingController();
-  TextEditingController _dateController = TextEditingController();
+  TextEditingController dateController = TextEditingController();
   TextEditingController _categoryEditing = TextEditingController();
   DateTime? _datePicked;
-  CategoryType? _selectedCategoryType;
+
   CategoryModel? _selectedCategoryModel;
-  String? _categoryID;
+
   GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   GlobalKey<FormState> _dateFormKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    _selectedCategoryType = CategoryType.Income;
-    super.initState();
-  }
 
   List<CategoryModel> newIncomeList =
       CategoryDB.instance.incomeCategoaryListLisner.value;
@@ -53,42 +44,43 @@ class _AddTransactionsState extends State<AddTransactions> {
         child: ListView(
           children: [
 //Radio Button Of Income & Expenses
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Row(
-                  children: [
-                    Radio(
-                      activeColor: Colors.green,
-                      value: CategoryType.Income,
-                      groupValue: _selectedCategoryType,
-                      onChanged: (newValue) {
-                        setState(() {
-                          _selectedCategoryType = CategoryType.Income;
-                          _categoryID = null;
-                        });
-                      },
-                    ),
-                    const Text('Income'),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Radio(
-                      activeColor: Colors.red,
-                      value: CategoryType.Expenses,
-                      groupValue: _selectedCategoryType,
-                      onChanged: (newValue) {
-                        setState(() {
-                          _selectedCategoryType = CategoryType.Expenses;
-                          _categoryID = null;
-                        });
-                      },
-                    ),
-                    const Text('Expenses'),
-                  ],
-                )
-              ],
+            Consumer<TransactionProvider>(
+              builder: (context, value, child) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Row(
+                    children: [
+                      Radio(
+                        activeColor: Colors.green,
+                        value: CategoryType.Income,
+                        groupValue: value.selectedCategoryType,
+                        onChanged: (newValue) {
+                          value.functionForRadioButtonOfCategory(
+                              CategoryType.Income);
+
+                          value.categoryID = null;
+                        },
+                      ),
+                      const Text('Income'),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio(
+                        activeColor: Colors.red,
+                        value: CategoryType.Expenses,
+                        groupValue: value.selectedCategoryType,
+                        onChanged: (newValue) {
+                          value.functionForRadioButtonOfCategory(
+                              CategoryType.Expenses);
+                          value.categoryID = null;
+                        },
+                      ),
+                      const Text('Expenses'),
+                    ],
+                  )
+                ],
+              ),
             ),
 //Select Date Icon, Calendar
             Container(
@@ -102,33 +94,34 @@ class _AddTransactionsState extends State<AddTransactions> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
 // DropDown Button For Select Category
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        isCollapsed: true,
-                        enabledBorder: InputBorder.none,
+                  Consumer<TransactionProvider>(
+                    builder: (context, value, child) => Expanded(
+                      child: DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          isCollapsed: true,
+                          enabledBorder: InputBorder.none,
+                        ),
+                        dropdownColor: Colors.grey.shade200,
+                        value: value.categoryID,
+                        hint: const Text('Select Category'),
+                        items:
+                            (value.selectedCategoryType == CategoryType.Income
+                                    ? CategoryDB().incomeCategoaryListLisner
+                                    : CategoryDB().expensesCategoaryListLisner)
+                                .value
+                                .map((e) {
+                          return DropdownMenuItem(
+                            onTap: () {
+                              _selectedCategoryModel = e;
+                            },
+                            value: e.id,
+                            child: Text(e.name),
+                          );
+                        }).toList(),
+                        onChanged: (selectedValue) {
+                          value.categoryIdFunction(selectedValue!);
+                        },
                       ),
-                      dropdownColor: Colors.grey.shade200,
-                      value: _categoryID,
-                      hint: const Text('Select Category'),
-                      items: (_selectedCategoryType == CategoryType.Income
-                              ? CategoryDB().incomeCategoaryListLisner
-                              : CategoryDB().expensesCategoaryListLisner)
-                          .value
-                          .map((e) {
-                        return DropdownMenuItem(
-                          onTap: () {
-                            _selectedCategoryModel = e;
-                          },
-                          value: e.id,
-                          child: Text(e.name),
-                        );
-                      }).toList(),
-                      onChanged: (selectedValue) {
-                        setState(() {
-                          _categoryID = selectedValue;
-                        });
-                      },
                     ),
                   ),
 // Icon Button For Add Category
@@ -148,11 +141,13 @@ class _AddTransactionsState extends State<AddTransactions> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   RadioButton(
-                                      title: 'Income',
-                                      type: CategoryType.Income,),
+                                    title: 'Income',
+                                    type: CategoryType.Income,
+                                  ),
                                   RadioButton(
-                                      title: 'Expenses',
-                                      type: CategoryType.Expenses,),
+                                    title: 'Expenses',
+                                    type: CategoryType.Expenses,
+                                  ),
                                 ],
                               ),
                               Form(
@@ -194,12 +189,13 @@ class _AddTransactionsState extends State<AddTransactions> {
                                   },
                                   maxLength: 15,
                                   decoration: const InputDecoration(
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(20),
-                                        ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(20),
                                       ),
-                                      labelText: 'Add Category',),
+                                    ),
+                                    labelText: 'Add Category',
+                                  ),
                                 ),
                               ),
 // Text FormField For Add Category
@@ -227,9 +223,12 @@ class _AddTransactionsState extends State<AddTransactions> {
 
                                         CategoryDB().addCategories(_category);
                                         _categoryEditing.clear();
-                                        setState(() {
-                                          CategoryDB.instance.refreshUI();
-                                        });
+                                        // setState(() {
+                                        //   CategoryDB.instance.refreshUI();
+                                        // });
+                                        Provider.of<TransactionProvider>(
+                                                context,listen: false)
+                                            .refreshUII();
 
                                         Navigator.of(ctx).pop();
                                       }
@@ -260,29 +259,44 @@ class _AddTransactionsState extends State<AddTransactions> {
             ),
 
 // Text Form Field For Date Picker
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.grey[200],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: Form(
-                  key: _dateFormKey,
-                  child: TextFormField(
-                    readOnly: true,
-                    controller: _dateController,
-                    onTap: () {
-                      _showDatePicker();
-                    },
-                    decoration: const InputDecoration(
-                        border: InputBorder.none, labelText: 'Select Date',),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Required';
-                      }
-                      return null;
-                    },
+            Consumer<TransactionProvider>(
+              builder: (context, value, child) => Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.grey[200],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Form(
+                    key: _dateFormKey,
+                    child: TextFormField(
+                      readOnly: true,
+                      controller: dateController,
+                      onTap: () async {
+                        _datePicked = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2022),
+                            lastDate: DateTime.now()
+                                .add(const Duration(days: 365 * 2)));
+                        if (_datePicked == null) {
+                          return;
+                        } else {
+                          value.setDate(_datePicked!);
+                          dateController.text = value.dateSelected!;
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        labelText: 'Select Date',
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Required';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -293,9 +307,10 @@ class _AddTransactionsState extends State<AddTransactions> {
 // TextFormField For Add Amount
             Container(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.grey[200],
-                  border: Border.all(color: Colors.white),),
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.grey[200],
+                border: Border.all(color: Colors.white),
+              ),
               child: Padding(
                 padding: const EdgeInsets.only(left: 10),
                 child: TextFormField(
@@ -323,14 +338,14 @@ class _AddTransactionsState extends State<AddTransactions> {
 
             Container(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white),
-                  color: Colors.grey[200],),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white),
+                color: Colors.grey[200],
+              ),
               child: Padding(
                 padding: const EdgeInsets.only(left: 10),
                 child: TextFormField(
                   textCapitalization: TextCapitalization.sentences,
-                 
                   controller: _noteTextConteoller,
                   decoration: const InputDecoration(
                     border: InputBorder.none,
@@ -367,29 +382,12 @@ class _AddTransactionsState extends State<AddTransactions> {
     );
   }
 
-// Fuction for date picker
-  _showDatePicker() async {
-    _datePicked = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(2022),
-        lastDate: DateTime.now().add(const Duration(days: 365*2)));
-    if (_datePicked == null) {
-      return;
-    } else {
-      setState(() {
-        _dateController.text = DateFormat.yMMMd().format(_datePicked!);
-      });
-    }
-  }
-
 //  Validation For  Amount FormField And Note FormField
-  void checkValidation(BuildContext ctx) {
+  void checkValidation(BuildContext context) {
     final parsedAmount = double.tryParse(_amountTextConteoller.text);
-    
 
     if (_selectedCategoryModel == null) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           margin: EdgeInsets.all(10),
           behavior: SnackBarBehavior.floating,
@@ -402,7 +400,7 @@ class _AddTransactionsState extends State<AddTransactions> {
         ),
       );
     } else if (_amountTextConteoller.text.isEmpty) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           margin: EdgeInsets.all(10),
           behavior: SnackBarBehavior.floating,
@@ -415,7 +413,7 @@ class _AddTransactionsState extends State<AddTransactions> {
         ),
       );
     } else if (parsedAmount == 0) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           margin: EdgeInsets.all(10),
           behavior: SnackBarBehavior.floating,
@@ -428,16 +426,17 @@ class _AddTransactionsState extends State<AddTransactions> {
         ),
       );
     } else {
-    final _model = TransactionModel(
+      final _model = TransactionModel(
         note: _noteTextConteoller.text,
         amount: parsedAmount!,
         date: _datePicked!,
-        type: _selectedCategoryType!,
+        type: Provider.of<TransactionProvider>(context, listen: false)
+            .selectedCategoryType,
         category: _selectedCategoryModel!,
       );
       TransactionDB.instance.addTransaction(_model);
 
-      ScaffoldMessenger.of(ctx).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           margin: EdgeInsets.all(10),
           behavior: SnackBarBehavior.floating,
@@ -455,45 +454,5 @@ class _AddTransactionsState extends State<AddTransactions> {
       _amountTextConteoller.clear();
       _noteTextConteoller.clear();
     }
-  }
-}
-// Class For Radio Buttons
-
-class RadioButton extends StatelessWidget {
-  final String title;
-  final CategoryType type;
-  RadioButton({
-    super.key,
-    required this.title,
-    required this.type,
-  });
-
-  CategoryType? _type;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: selectedCategoryNotifier,
-      builder: (context, newCategory, _) {
-        return Row(
-          children: [
-            Radio<CategoryType>(
-              value: type,
-              activeColor:
-                  (type == CategoryType.Expenses ? Colors.red : Colors.green),
-              groupValue: newCategory,
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
-                selectedCategoryNotifier.value = value;
-                selectedCategoryNotifier.notifyListeners();
-              },
-            ),
-            Text(title),
-          ],
-        );
-      },
-    );
   }
 }

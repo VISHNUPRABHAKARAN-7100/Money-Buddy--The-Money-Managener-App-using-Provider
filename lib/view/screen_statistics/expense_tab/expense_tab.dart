@@ -8,18 +8,6 @@ import '../../../provider/transaction_provider.dart';
 class ExpenseTab extends StatelessWidget {
   const ExpenseTab({super.key});
 
-//   @override
-//   State<ExpenseTab> createState() => _ExpenseTabState();
-// }
-
-// class _ExpenseTabState extends State<ExpenseTab> {
-//   late List<TransactionModel> chartData;
-//   @override
-//   void initState() {
-//     chartData = TransactionDB.instance.newExpeneseTransactionNotifier.value;
-//     super.initState();
-//   }
-
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(

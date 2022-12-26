@@ -47,7 +47,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .filterForAllTransaction();
+                              .filterForAllTransaction(TransactionDB
+                                  .instance.transactionListNotifier.value);
                         },
                       ),
                       DropdownMenuItem(
@@ -56,7 +57,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .filterForAllIncome();
+                              .filterForAllTransaction(TransactionDB.instance
+                                  .newIncomeTransactionNotaifier.value);
                         },
                       ),
                       DropdownMenuItem(
@@ -65,7 +67,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .filterForAllExpenses();
+                              .filterForAllTransaction(TransactionDB.instance
+                                  .newExpeneseTransactionNotifier.value);
                         },
                       ),
                     ],
@@ -95,7 +98,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .filterForAllTransaction();
+                              .filterForAllTransaction(TransactionDB
+                                  .instance.transactionListNotifier.value);
                         },
                       ),
                       DropdownMenuItem(
@@ -104,7 +108,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .fileringForToday();
+                              .filterForAllTransaction(
+                                  TransactionDB.instance.todayNotifier.value);
                         },
                       ),
                       DropdownMenuItem(
@@ -113,7 +118,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .filteringForMonthly();
+                              .filterForAllTransaction(
+                                  TransactionDB.instance.monthlyNotifier.value);
                         },
                       ),
                       DropdownMenuItem(
@@ -122,7 +128,8 @@ class AllTransactions extends StatelessWidget {
                         onTap: () {
                           Provider.of<TransactionProvider>(context,
                                   listen: false)
-                              .filteringForYearly();
+                              .filterForAllTransaction(
+                                  TransactionDB.instance.yearlyNotifier.value);
                         },
                       )
                     ],
@@ -149,7 +156,8 @@ class AllTransactions extends StatelessWidget {
               child: TextFormField(
                 controller: _searchController,
                 onChanged: (value) =>
-                    _searchTransaction(_searchController.text),
+                    Provider.of<TransactionProvider>(context, listen: false)
+                        .searchTransaction(_searchController.text),
                 decoration: const InputDecoration(
                   contentPadding: EdgeInsets.all(20),
                   hintText: 'Search',
@@ -202,16 +210,10 @@ class AllTransactions extends StatelessWidget {
                                               TextButton(
                                                 onPressed: () {
                                                   Provider.of<TransactionProvider>(
-                                                          context,listen: false)
-                                                      .functionForDeleteATransaction(_value.id!,context);
-                                                  // setState(() {
-                                                  //   TransactionDB.instance
-                                                  //       .deleteTransaction(
-                                                  //           _value.id!);
-                                                  //   TransactionDB.instance
-                                                  //       .refresh();
-                                                  //   Navigator.of(context).pop();
-                                                  // });
+                                                          context,
+                                                          listen: false)
+                                                      .functionForDeleteATransaction(
+                                                          _value.id!, context);
                                                 },
                                                 child: const Text('Ok'),
                                               ),
@@ -305,24 +307,5 @@ class AllTransactions extends StatelessWidget {
     final formatedDate = DateFormat.yMMMd().format(data);
     final splitedDate = formatedDate.split(' ');
     return '${splitedDate[1]} ${splitedDate.first} ${splitedDate.last} ';
-  }
-
-// Function for search a transaction in all transaction
-  void _searchTransaction(String enteredValue) {
-    List<TransactionModel> results = [];
-    if (enteredValue.isEmpty) {
-      results = TransactionDB.instance.transactionListNotifier.value;
-      ;
-    } else {
-      results = TransactionDB.instance.transactionListNotifier.value
-          .where((element) => element.category.name
-              .trim()
-              .toLowerCase()
-              .contains(enteredValue.trim().toLowerCase()))
-          .toList();
-    }
-    // setState(() {
-    //   valueFounded = results;
-    // });
   }
 }
